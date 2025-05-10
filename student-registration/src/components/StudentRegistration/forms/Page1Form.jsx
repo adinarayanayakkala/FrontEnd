@@ -1,6 +1,6 @@
 // forms/Page1Form.jsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Grid,
   TextField,
@@ -13,11 +13,15 @@ import {
   Button,
   FormHelperText,
   Avatar,
+  CircularProgress,
+  MenuItem,
+  Select,
+  InputLabel,
 } from '@mui/material';
 import { Controller } from 'react-hook-form';
 import { CloudUpload } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import { statesList, countriesList } from '../formConfig';
+import { getCountries, getStates, getCities } from '../api';
 
 const StyledAvatar = styled(Avatar)(({ theme }) => ({
   width: theme.spacing(12),
@@ -27,6 +31,60 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
 }));
 
 const Page1Form = ({ control, errors, setValue, watch }) => {
+  // Dynamic address data states
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loadingState, setLoadingState] = useState(false);
+  const [loadingCity, setLoadingCity] = useState(false);
+
+  // Fetch countries on component mount
+  useEffect(() => {
+    getCountries().then(setCountries);
+  }, []);
+
+  // Watch for country changes
+  const country = watch('country');
+  useEffect(() => {
+    if (!country) {
+      setStates([]);
+      setCities([]);
+      return;
+    }
+    setLoadingState(true);
+    getStates(country).then((data) => {
+      setStates(data);
+      setLoadingState(false);
+      setValue('state', '');
+      setValue('city', '');
+      setValue('postalCode', '');
+    });
+  }, [country, setValue]);
+
+  // Watch for state changes
+  const state = watch('state');
+  useEffect(() => {
+    if (!state) {
+      setCities([]);
+      return;
+    }
+    setLoadingCity(true);
+    getCities(state).then((data) => {
+      setCities(data);
+      setLoadingCity(false);
+      setValue('city', '');
+      setValue('postalCode', '');
+    });
+  }, [state, setValue]);
+
+  // Watch for city changes to update postal code
+  const city = watch('city');
+  useEffect(() => {
+    if (!city) return;
+    const selected = cities.find((c) => c.name === city);
+    if (selected) setValue('postalCode', selected.postalCode);
+  }, [city, cities, setValue]);
+
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -40,7 +98,9 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
       <Grid item xs={12}>
         <Typography variant="h6" gutterBottom>Profile Photo</Typography>
         <Grid container justifyContent="center">
-          <StyledAvatar src={watch('profilePhoto') && URL.createObjectURL(watch('profilePhoto'))} />
+          <StyledAvatar 
+            src={watch('profilePhoto') && URL.createObjectURL(watch('profilePhoto'))} 
+          />
         </Grid>
         <Grid container justifyContent="center">
           <Button
@@ -62,9 +122,9 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
         )}
       </Grid>
 
-      {/* Contact Details - Name Section */}
+      {/* Personal Details Section */}
       <Grid item xs={12}>
-        <Typography variant="h6" gutterBottom>Contact Details</Typography>
+        <Typography variant="h6" gutterBottom>Personal Details</Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={4}>
             <Controller
@@ -112,9 +172,9 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
         </Grid>
       </Grid>
 
-      {/* Contact Details - Contact Information */}
+      {/* Contact Details Section */}
       <Grid item xs={12}>
-        <Typography variant="subtitle1" gutterBottom>Contact Information</Typography>
+        <Typography variant="h6" gutterBottom>Contact Details</Typography>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={4}>
             <Controller
@@ -156,6 +216,8 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
                   {...field}
                   fullWidth
                   label="Alternative Phone (optional)"
+                  error={!!errors.altPhone}
+                  helperText={errors.altPhone?.message}
                 />
               )}
             />
@@ -163,9 +225,9 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
         </Grid>
       </Grid>
 
-      {/* Address Information */}
+      {/* Address Information Section */}
       <Grid item xs={12}>
-        <Typography variant="subtitle1" gutterBottom>Address Information</Typography>
+        <Typography variant="h6" gutterBottom>Address Information</Typography>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Controller
@@ -184,65 +246,89 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
               )}
             />
           </Grid>
+
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="city"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label="City"
-                  error={!!errors.city}
-                  helperText={errors.city?.message}
+            <FormControl fullWidth error={!!errors.country}>
+              <InputLabel id="country-label">Country</InputLabel>
+              <Controller
+                name="country"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="country-label"
+                    label="Country"
+                  >
+                    {countries.map((country) => (
+                      <MenuItem key={country.code} value={country.code}>
+                        {country.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              <FormHelperText>{errors.country?.message}</FormHelperText>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            {loadingState ? (
+              <CircularProgress size={24} />
+            ) : (
+              <FormControl fullWidth error={!!errors.state}>
+                <InputLabel id="state-label">State/Province</InputLabel>
+                <Controller
+                  name="state"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="state-label"
+                      label="State/Province"
+                      disabled={!states.length}
+                    >
+                      {states.map((state) => (
+                        <MenuItem key={state.code} value={state.code}>
+                          {state.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
                 />
-              )}
-            />
+                <FormHelperText>{errors.state?.message}</FormHelperText>
+              </FormControl>
+            )}
           </Grid>
+
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="state"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  fullWidth
-                  label="State/Province"
-                  error={!!errors.state}
-                  helperText={errors.state?.message}
-                >
-                  {statesList.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </TextField>
-              )}
-            />
+            {loadingCity ? (
+              <CircularProgress size={24} />
+            ) : (
+              <FormControl fullWidth error={!!errors.city}>
+                <InputLabel id="city-label">City</InputLabel>
+                <Controller
+                  name="city"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      labelId="city-label"
+                      label="City"
+                      disabled={!cities.length}
+                    >
+                      {cities.map((city) => (
+                        <MenuItem key={city.name} value={city.name}>
+                          {city.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                />
+                <FormHelperText>{errors.city?.message}</FormHelperText>
+              </FormControl>
+            )}
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Controller
-              name="country"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  fullWidth
-                  label="Country"
-                  error={!!errors.country}
-                  helperText={errors.country?.message}
-                >
-                  {countriesList.map((country) => (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  ))}
-                </TextField>
-              )}
-            />
-          </Grid>
+
           <Grid item xs={12} sm={6}>
             <Controller
               name="postalCode"
@@ -252,6 +338,7 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
                   {...field}
                   fullWidth
                   label="Postal Code"
+                  InputProps={{ readOnly: true }}
                   error={!!errors.postalCode}
                   helperText={errors.postalCode?.message}
                 />
@@ -261,7 +348,7 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
         </Grid>
       </Grid>
 
-      {/* Basic Details */}
+      {/* Basic Details Section */}
       <Grid item xs={12}>
         <Typography variant="h6" gutterBottom>Basic Details</Typography>
         <Grid container spacing={2}>
@@ -283,23 +370,23 @@ const Page1Form = ({ control, errors, setValue, watch }) => {
             />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="gender"
-              control={control}
-              render={({ field }) => (
-                <FormControl error={!!errors.gender}>
-                  <FormLabel>Gender</FormLabel>
+            <FormControl error={!!errors.gender}>
+              <FormLabel>Gender</FormLabel>
+              <Controller
+                name="gender"
+                control={control}
+                render={({ field }) => (
                   <RadioGroup row {...field}>
                     <FormControlLabel value="male" control={<Radio />} label="Male" />
                     <FormControlLabel value="female" control={<Radio />} label="Female" />
                     <FormControlLabel value="other" control={<Radio />} label="Other" />
                   </RadioGroup>
-                  {errors.gender && (
-                    <FormHelperText error>{errors.gender.message}</FormHelperText>
-                  )}
-                </FormControl>
+                )}
+              />
+              {errors.gender && (
+                <FormHelperText error>{errors.gender.message}</FormHelperText>
               )}
-            />
+            </FormControl>
           </Grid>
         </Grid>
       </Grid>

@@ -73,7 +73,9 @@ export const languagesList = [
   'Marathi',
   'Telugu',
   'Tamil',
-  // Add more languages
+  'Kannada',
+  'Malayalam',
+  'Bengali'
 ];
 
 export const relationshipsList = [

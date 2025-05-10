@@ -13,6 +13,7 @@ import {
   FormHelperText,
   Select,
   MenuItem,
+  InputLabel,
 } from '@mui/material';
 import { Controller } from 'react-hook-form';
 import {
@@ -23,7 +24,9 @@ import {
   academicYears,
 } from '../formConfig';
 
-const Page2Form = ({ control, errors }) => {
+const Page2Form = ({ control, errors, watch }) => {
+  const selectedRelation = watch('emergencyRelation');
+
   return (
     <Grid container spacing={3}>
       {/* Academic Information Section */}
@@ -47,60 +50,69 @@ const Page2Form = ({ control, errors }) => {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="marksPercentage"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.marksPercentage}>
-                  <FormLabel>Marks Percentage</FormLabel>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="" disabled>Select Percentage Range</MenuItem>
+            <FormControl fullWidth error={!!errors.marksPercentage}>
+              <InputLabel id="marks-percentage-label">Marks Percentage</InputLabel>
+              <Controller
+                name="marksPercentage"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="marks-percentage-label"
+                    label="Marks Percentage"
+                  >
                     {marksPercentageRanges.map((range) => (
                       <MenuItem key={range} value={range}>{range}</MenuItem>
                     ))}
                   </Select>
-                  <FormHelperText>{errors.marksPercentage?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+                )}
+              />
+              <FormHelperText>{errors.marksPercentage?.message}</FormHelperText>
+            </FormControl>
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="academicYear"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.academicYear}>
-                  <FormLabel>Academic Year</FormLabel>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="" disabled>Select Academic Year</MenuItem>
+            <FormControl fullWidth error={!!errors.academicYear}>
+              <InputLabel id="academic-year-label">Academic Year</InputLabel>
+              <Controller
+                name="academicYear"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="academic-year-label"
+                    label="Academic Year"
+                  >
                     {academicYears.map((year) => (
                       <MenuItem key={year} value={year}>{year}</MenuItem>
                     ))}
                   </Select>
-                  <FormHelperText>{errors.academicYear?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+                )}
+              />
+              <FormHelperText>{errors.academicYear?.message}</FormHelperText>
+            </FormControl>
           </Grid>
 
           <Grid item xs={12}>
-            <Controller
-              name="desiredCourse"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.desiredCourse}>
-                  <FormLabel>Desired Course/Major</FormLabel>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="" disabled>Select Course</MenuItem>
+            <FormControl fullWidth error={!!errors.desiredCourse}>
+              <InputLabel id="desired-course-label">Desired Course/Major</InputLabel>
+              <Controller
+                name="desiredCourse"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="desired-course-label"
+                    label="Desired Course/Major"
+                  >
                     {coursesList.map((course) => (
                       <MenuItem key={course} value={course}>{course}</MenuItem>
                     ))}
                   </Select>
-                  <FormHelperText>{errors.desiredCourse?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+                )}
+              />
+              <FormHelperText>{errors.desiredCourse?.message}</FormHelperText>
+            </FormControl>
           </Grid>
         </Grid>
       </Grid>
@@ -110,52 +122,57 @@ const Page2Form = ({ control, errors }) => {
         <Typography variant="h6" gutterBottom>Additional Information</Typography>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Controller
-              name="extracurriculars"
-              control={control}
-              render={({ field }) => (
-                <FormControl 
-                  component="fieldset" 
-                  error={!!errors.extracurriculars}
-                  fullWidth
-                >
-                  <FormLabel component="legend">Extracurricular Activities</FormLabel>
-                  <FormGroup row>
-                    {['Sports', 'Music', 'Dance', 'Art', 'Debate', 'Others'].map((activity) => (
-                      <FormControlLabel
-                        key={activity}
-                        control={
-                          <Checkbox
-                            checked={field.value.includes(activity.toLowerCase())}
-                            onChange={(e) => {
-                              const newValue = e.target.checked
-                                ? [...field.value, activity.toLowerCase()]
-                                : field.value.filter(v => v !== activity.toLowerCase());
-                              field.onChange(newValue);
-                            }}
-                          />
-                        }
-                        label={activity}
-                      />
-                    ))}
-                  </FormGroup>
-                  <FormHelperText>{errors.extracurriculars?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+            <FormControl 
+              component="fieldset" 
+              error={!!errors.extracurriculars}
+              fullWidth
+            >
+              <FormLabel component="legend">Extracurricular Activities</FormLabel>
+              <FormGroup row>
+                <Controller
+                  name="extracurriculars"
+                  control={control}
+                  defaultValue={[]}
+                  render={({ field }) => (
+                    <>
+                      {['Sports', 'Music', 'Dance', 'Art', 'Debate', 'Others'].map((activity) => (
+                        <FormControlLabel
+                          key={activity}
+                          control={
+                            <Checkbox
+                              checked={field.value.includes(activity.toLowerCase())}
+                              onChange={(e) => {
+                                const newValue = e.target.checked
+                                  ? [...field.value, activity.toLowerCase()]
+                                  : field.value.filter(v => v !== activity.toLowerCase());
+                                field.onChange(newValue);
+                              }}
+                            />
+                          }
+                          label={activity}
+                        />
+                      ))}
+                    </>
+                  )}
+                />
+              </FormGroup>
+              <FormHelperText>{errors.extracurriculars?.message}</FormHelperText>
+            </FormControl>
           </Grid>
 
           <Grid item xs={12}>
-            <Controller
-              name="languages"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.languages}>
-                  <FormLabel>Languages Known</FormLabel>
+            <FormControl fullWidth error={!!errors.languages}>
+              <InputLabel id="languages-label">Languages Known</InputLabel>
+              <Controller
+                name="languages"
+                control={control}
+                defaultValue={[]}
+                render={({ field }) => (
                   <Select
                     {...field}
+                    labelId="languages-label"
                     multiple
-                    displayEmpty
+                    label="Languages Known"
                     renderValue={(selected) => selected.join(', ')}
                   >
                     {languagesList.map((language) => (
@@ -165,10 +182,10 @@ const Page2Form = ({ control, errors }) => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <FormHelperText>{errors.languages?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+                )}
+              />
+              <FormHelperText>{errors.languages?.message}</FormHelperText>
+            </FormControl>
           </Grid>
 
           <Grid item xs={12}>
@@ -212,23 +229,45 @@ const Page2Form = ({ control, errors }) => {
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <Controller
-              name="emergencyRelation"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.emergencyRelation}>
-                  <FormLabel>Relationship</FormLabel>
-                  <Select {...field} displayEmpty>
-                    <MenuItem value="" disabled>Select Relationship</MenuItem>
+            <FormControl fullWidth error={!!errors.emergencyRelation}>
+              <InputLabel id="emergency-relation-label">Relationship</InputLabel>
+              <Controller
+                name="emergencyRelation"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    labelId="emergency-relation-label"
+                    label="Relationship"
+                  >
                     {relationshipsList.map((relation) => (
                       <MenuItem key={relation} value={relation}>{relation}</MenuItem>
                     ))}
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
-                  <FormHelperText>{errors.emergencyRelation?.message}</FormHelperText>
-                </FormControl>
-              )}
-            />
+                )}
+              />
+              <FormHelperText>{errors.emergencyRelation?.message}</FormHelperText>
+            </FormControl>
           </Grid>
+
+          {selectedRelation === 'Other' && (
+            <Grid item xs={12}>
+              <Controller
+                name="otherRelation"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    label="Specify Relationship"
+                    error={!!errors.otherRelation}
+                    helperText={errors.otherRelation?.message}
+                  />
+                )}
+              />
+            </Grid>
+          )}
 
           <Grid item xs={12} sm={6}>
             <Controller
