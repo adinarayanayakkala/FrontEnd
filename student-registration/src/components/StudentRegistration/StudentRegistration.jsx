@@ -63,7 +63,7 @@ const StudentRegistration = () => {
       case 0:
         return <Page1Form control={control} errors={errors} setValue={setValue} watch={watch} />;
       case 1:
-        return <Page2Form control={control} errors={errors} />;
+        return <Page2Form control={control} errors={errors} watch={watch} />;
       case 2:
         return <Page3Form control={control} errors={errors} setValue={setValue} />;
       default:
